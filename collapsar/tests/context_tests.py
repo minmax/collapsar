@@ -28,9 +28,15 @@ class ContextTest(TestCase):
 
 
 class ScopeTest(TestCase):
+    PREINSTANTIATED = TestObject()
+
     CONFIG = {
         'singleton': Description(cls=TestObject, scope=CONST.SCOPE.SINGLETON),
         'prototype': Description(cls=TestObject, scope=CONST.SCOPE.PROTOTYPE),
+        'preinstantiated': Description(
+            cls = PREINSTANTIATED,
+            scope = CONST.SCOPE.PREINSTANTIATED
+        ),
     }
 
     def setUp(self):
@@ -45,6 +51,11 @@ class ScopeTest(TestCase):
         first, second = self.get_two_objects('prototype')
 
         self.assertNotEqual(id(first), id(second), 'Object are not singleton')
+
+    def preinstantiated_test(self):
+        obj = self.context.get_object('preinstantiated')
+
+        self.assertEqual(id(self.PREINSTANTIATED), id(obj))
 
     def get_two_objects(self, name):
         return (
