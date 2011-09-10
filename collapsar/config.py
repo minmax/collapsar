@@ -1,10 +1,7 @@
 from importlib import import_module
 
 from collapsar.const import CONST
-
-
-class ImproperlyConfigured(Exception):
-    pass
+from collapsar.exc import ImproperlyConfigured
 
 
 class NoDefault(object):
