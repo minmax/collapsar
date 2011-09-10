@@ -28,12 +28,8 @@ class Rel(object):
 
 
 class Description(object):
-    id = None
-    cls = None
-    factory = None
-    setups = None
-    properties = None
-    type = None
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
 
 
 class FSLoader(object):
@@ -153,7 +149,6 @@ class YAMLConfig(object):
 
     def create_description(self, name, object_data):
         descr = Description()
-        descr.id = name
 
         for attr in self.RESOLVERS:
             value = self.resolve_attr(object_data, attr)
