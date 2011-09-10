@@ -8,6 +8,8 @@ else:
 from collapsar.const import CONST
 from collapsar.config import YAMLConfig, StringLoader, ImproperlyConfigured
 
+from collapsar.tests.objects import TestObject
+
 
 EMPTY_YAML = """
 objects:
@@ -22,7 +24,7 @@ objects:
 CLASS_YAML = """
 objects:
   name:
-    class: %(module)s:TestObject
+    class: collapsar.tests.objects:TestObject
     scope: prototype
     properties:
       attr: test test
@@ -33,18 +35,8 @@ objects:
           name: rel_name
           attr: attr_name
   defaults:
-    class: %(module)s:TestObject
-""" % {
-    'module': __name__
-}
-
-
-class TestObject(object):
-    pass
-
-
-class RelTestObject(object):
-    pass
+    class: collapsar.tests.objects:TestObject
+"""
 
 
 class YAMLConfigTest(TestCase):
