@@ -5,6 +5,8 @@ if sys.version_info < (2, 7):
 else:
     from unittest import TestCase
 
+from mock import Mock
+
 from collapsar.context import ApplicationContext
 from collapsar.config.scheme import Description, Rel
 from collapsar.const import CONST
@@ -130,3 +132,23 @@ class FactoryTest(BaseContextTest):
         obj = self.get_object(name)
         self.assertTrue(isinstance(obj, TestObject))
         self.assertEqual(flag, obj.flag)
+
+
+class LazyTest(TestCase):
+    def runTest(self):
+        mock, factory_mock = self.get_lazy_mock_from_config()
+
+        self.assertFalse(factory_mock.called)
+
+        # touch object
+        mock.method()
+
+        self.assertTrue(factory_mock.called)
+
+    def get_lazy_mock_from_config(self):
+        mock = Mock()
+        config = {'lazy': Description(cls=mock, lazy=True)}
+        return (
+            ApplicationContext(config).get_object('lazy'),
+            mock
+        )

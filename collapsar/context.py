@@ -1,6 +1,7 @@
 from collapsar.exc import ObjectNotRegistered
 from collapsar.const import CONST
 from collapsar.config.scheme import Rel
+from collapsar.proxy import make_proxy
 
 
 class ApplicationContext(object):
@@ -14,6 +15,12 @@ class ApplicationContext(object):
 
         descr = self.config[name]
 
+        if descr.lazy:
+            return make_proxy(lambda s: self._get_instance(name, descr))
+        else:
+            return self._get_instance(name, descr)
+
+    def _get_instance(self, name, descr):
         if descr.scope == CONST.SCOPE.SINGLETON:
             if name in self._singletons:
                 obj = self._singletons[name]
@@ -26,7 +33,6 @@ class ApplicationContext(object):
             obj = descr.cls
         else:
             raise NotImplementedError
-
         return obj
 
     def _create_instance(self, descr):
