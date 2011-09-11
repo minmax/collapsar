@@ -10,6 +10,7 @@ __all__ = [
     'PropertiesResolver',
     'ScopeResolver',
     'FactoryResolver',
+    'BooleanResolver',
 ]
 
 
@@ -94,3 +95,10 @@ class FactoryResolver(BaseResolver):
             return self.resolve_rel(source)
         else:
             return self.resolve_import(source)
+
+
+class BooleanResolver(BaseResolver):
+    def resolve(self, source):
+        if not isinstance(source, bool):
+            raise ImproperlyConfigured('Must be boolean, not %r' % source)
+        return source

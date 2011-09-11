@@ -18,6 +18,7 @@ class YAMLConfig(object):
         'factory': (FactoryResolver, NoDefault('class')),
         'properties': (PropertiesResolver, Description.properties),
         'scope': (ScopeResolver, Description.scope),
+        'lazy': (BooleanResolver, Description.lazy),
     }
 
     NAMES_MAP = {

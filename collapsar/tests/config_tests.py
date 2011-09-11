@@ -41,6 +41,7 @@ class BaseDescriptionTest(BaseYAMLConfigTest):
       name:
         class: collapsar.tests.objects:TestObject
         scope: prototype
+        lazy: true
         properties:
           attr: test test
           simple_rel:
@@ -57,6 +58,8 @@ class BaseDescriptionTest(BaseYAMLConfigTest):
         self.assertEqual(TestObject, description.cls)
 
         self.assertEqual('prototype', description.scope)
+
+        self.assertEqual(True, description.lazy)
 
         self.assertEqual('test test', description.properties['attr'])
 
