@@ -6,28 +6,46 @@ else:
     from unittest import TestCase
 
 from collapsar.context import ApplicationContext
-from collapsar.config import Description
+from collapsar.config import Description, Rel
 from collapsar.const import CONST
 
 from collapsar.tests.objects import TestObject, RelTestObject
 
 
-class ContextTest(TestCase):
-    SIMPLE_OBJ_CONF = {
-        'obj': Description(cls=TestObject, scope=CONST.SCOPE.SINGLETON),
+class BaseContextTest(TestCase):
+    CONFIG = None
+
+    def setUp(self):
+        assert self.CONFIG
+        self.context = ApplicationContext(self.CONFIG)
+
+    def get_object(self, name):
+        return self.context.get_object(name)
+
+
+class PropertiesTest(BaseContextTest):
+    OBJECT_NAME = 'obj'
+    ATTR_VALUE = 123
+
+    CONFIG = {
+        OBJECT_NAME: Description(
+            cls = TestObject,
+            scope = CONST.SCOPE.SINGLETON,
+            properties = {
+                'attr': ATTR_VALUE,
+            }
+        )
     }
 
-    def simple_id_test(self):
-        obj = self.get_object(self.SIMPLE_OBJ_CONF, 'obj')
+    def runTest(self):
+        obj = self.get_instance()
+        self.assertEqual(self.ATTR_VALUE, obj.attr)
 
-        self.assertTrue(isinstance(obj, TestObject))
-
-    def get_object(self, config, name):
-        context = ApplicationContext(config)
-        return context.get_object(name)
+    def get_instance(self):
+        return self.get_object(self.OBJECT_NAME)
 
 
-class ScopeTest(TestCase):
+class ScopeTest(BaseContextTest):
     PREINSTANTIATED = TestObject()
 
     CONFIG = {
@@ -38,9 +56,6 @@ class ScopeTest(TestCase):
             scope = CONST.SCOPE.PREINSTANTIATED
         ),
     }
-
-    def setUp(self):
-        self.context = ApplicationContext(self.CONFIG)
 
     def singleton_test(self):
         first, second = self.get_two_objects('singleton')
@@ -53,12 +68,12 @@ class ScopeTest(TestCase):
         self.assertNotEqual(id(first), id(second), 'Object are not singleton')
 
     def preinstantiated_test(self):
-        obj = self.context.get_object('preinstantiated')
+        obj = self.get_object('preinstantiated')
 
         self.assertEqual(id(self.PREINSTANTIATED), id(obj))
 
     def get_two_objects(self, name):
         return (
-            self.context.get_object(name),
-            self.context.get_object(name)
+            self.get_object(name),
+            self.get_object(name)
         )

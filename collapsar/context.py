@@ -17,13 +17,20 @@ class ApplicationContext(object):
             if name in self._singletons:
                 obj = self._singletons[name]
             else:
-                obj = descr.cls()
+                obj = self._create_instance(descr)
                 self._singletons[name] = obj
         elif descr.scope == CONST.SCOPE.PROTOTYPE:
-            obj = descr.cls()
+            obj = self._create_instance(descr)
         elif descr.scope == CONST.SCOPE.PREINSTANTIATED:
             obj = descr.cls
         else:
             raise NotImplementedError
 
+        return obj
+
+    def _create_instance(self, descr):
+        obj = descr.cls()
+        if descr.properties:
+            for name, value in descr.properties.iteritems():
+                setattr(obj, name, value)
         return obj

@@ -28,6 +28,9 @@ class Rel(object):
 
 
 class Description(object):
+    properties = {}
+    scope = CONST.SCOPE.SINGLETON
+
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
@@ -118,13 +121,16 @@ class ScopeResolver(object):
 class YAMLConfig(object):
     RESOLVERS = {
         'class': (ClassResolver, NoDefault),
-        'properties': (PropertiesResolver, dict),
-        'scope': (ScopeResolver, lambda: CONST.SCOPE.SINGLETON)
+        'properties': (PropertiesResolver, Description.properties),
+        'scope': (ScopeResolver, Description.scope),
     }
 
     NAMES_MAP = {
         'class': 'cls',
     }
+
+    RESOLVER_INDEX = 0
+    DEFAULT_INDEX = 1
 
     def __init__(self, loader):
         self.loader = loader
@@ -172,11 +178,10 @@ class YAMLConfig(object):
         return self.get_default(attr) is not NoDefault
 
     def get_default(self, attr):
-        default_factory = self.RESOLVERS[attr][1]
-        return default_factory()
+        return self.RESOLVERS[attr][self.DEFAULT_INDEX]
 
     def resolve_source(self, attr, source):
-        resolver_cls = self.RESOLVERS[attr][0]
+        resolver_cls = self.RESOLVERS[attr][self.RESOLVER_INDEX]
         return resolver_cls().resolve(source)
 
     def set_descr_attr(self, descr, attr, value):
