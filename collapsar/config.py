@@ -47,8 +47,8 @@ class StringLoader(object):
         return self.source
 
 
-class ClassResolver(object):
-    def resolve(self, source):
+class BaseResolver(object):
+    def resolve_import(self, source):
         module_name, attr_names = source.split(':', 1)
         obj = import_module(module_name)
         attr_names_list = attr_names.split('.')
@@ -56,13 +56,28 @@ class ClassResolver(object):
             obj = getattr(obj, attr_name)
         return obj
 
+    def resolve_rel(self, source):
+        rel_source = source['rel']
+        if isinstance(rel_source, dict):
+            return Rel(**rel_source)
+        else:
+            return Rel(rel_source)
 
-class ProxyResolver(object):
+    def is_rel_source(self, source):
+        return isinstance(source, dict) and 'rel' in source
+
+
+class ClassResolver(BaseResolver):
+    def resolve(self, source):
+        return self.resolve_import(source)
+
+
+class ProxyResolver(BaseResolver):
     def resolve(self, source):
         return source
 
 
-class PropertiesResolver(object):
+class PropertiesResolver(BaseResolver):
     BUILDIN_TYPES = {
         'int': int,
         'long': long,
@@ -87,30 +102,37 @@ class PropertiesResolver(object):
 
     def resolve_property(self, source):
         if isinstance(source, dict):
-            if 'rel' in source:
-                rel_source = source['rel']
-                if isinstance(rel_source, dict):
-                    return Rel(**rel_source)
-                else:
-                    return Rel(rel_source)
+            if self.is_rel_source(source):
+                return self.resolve_rel(source)
             else:
-                type_name = source['type']
-                value_sourve = source['value']
-                return self.get_resolver(type_name)(value_sourve)
+                return self.resolve_plain_obj(source)
         else:
             return source
+
+    def resolve_plain_obj(self, source):
+        type_name = source['type']
+        value_sourve = source['value']
+        return self.get_resolver(type_name)(value_sourve)
 
     def get_resolver(self, type_name):
         return self.BUILDIN_TYPES[type_name]
 
 
-class ScopeResolver(object):
+class ScopeResolver(BaseResolver):
     SKOPES = frozenset(CONST.SCOPE.values())
 
     def resolve(self, source):
         if source not in self.SKOPES:
             raise ImproperlyConfigured('invalid scope %s' % source)
         return source
+
+
+class FactoryResolver(BaseResolver):
+    def resolve(self, source):
+        if self.is_rel_source(source):
+            return self.resolve_rel(source)
+        else:
+            return self.resolve_import(source)
 
 
 class NoDefault(object):
@@ -123,7 +145,7 @@ class NoDefault(object):
 class YAMLConfig(object):
     RESOLVERS = {
         'class': (ClassResolver, NoDefault('factory')),
-        'factory': (ClassResolver, NoDefault('class')),
+        'factory': (FactoryResolver, NoDefault('class')),
         'properties': (PropertiesResolver, Description.properties),
         'scope': (ScopeResolver, Description.scope),
     }

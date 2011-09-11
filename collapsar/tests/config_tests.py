@@ -81,12 +81,24 @@ class DefaultsTest(BaseYAMLConfigTest):
 class FactoryTest(BaseYAMLConfigTest):
     YAML = """
     objects:
-      obj:
+      plain_cls:
         factory: collapsar.tests.objects:SimpleFactory
+
+      with_rel:
+        factory:
+          rel:
+            name: simple_factory
+            attr: get_instance
     """
-    def runTest(self):
-        descr = self.get_description('obj')
+
+    def plain_cls_test(self):
+        descr = self.get_description('plain_cls')
         self.assertEqual(SimpleFactory, descr.factory)
+
+    def with_rel_test(self):
+        descr = self.get_description('with_rel')
+        self.assertEqual('simple_factory', descr.factory.name)
+        self.assertEqual('get_instance', descr.factory.attr)
 
 
 class ErrorWithoutClassTest(TestCase):
