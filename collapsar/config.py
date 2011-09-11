@@ -1,13 +1,7 @@
 from importlib import import_module
 
 from collapsar.const import CONST
-from collapsar.exc import ImproperlyConfigured
-
-
-class NoDefault(object):
-    def __call__(self):
-        return self
-NoDefault = NoDefault()
+from collapsar.exc import ImproperlyConfigured, NotResolved
 
 
 class ObjectFactory(object):
@@ -118,9 +112,17 @@ class ScopeResolver(object):
         return source
 
 
+class NoDefault(object):
+    replacement = None
+
+    def __init__(self, replacement=None):
+        self.replacement = replacement
+
+
 class YAMLConfig(object):
     RESOLVERS = {
-        'class': (ClassResolver, NoDefault),
+        'class': (ClassResolver, NoDefault('factory')),
+        'factory': (ClassResolver, NoDefault('class')),
         'properties': (PropertiesResolver, Description.properties),
         'scope': (ScopeResolver, Description.scope),
     }
@@ -157,8 +159,13 @@ class YAMLConfig(object):
         descr = Description()
 
         for attr in self.RESOLVERS:
-            value = self.resolve_attr(object_data, attr)
-            self.set_descr_attr(descr, attr, value)
+            try:
+                value = self.resolve_attr(object_data, attr)
+            except NotResolved:
+                if not self.has_replacement(object_data, attr):
+                    raise
+            else:
+                self.set_descr_attr(descr, attr, value)
 
         assert not self.get_not_processed(object_data), \
             'Not supported options %s' % self.get_not_processed(object_data)
@@ -170,12 +177,24 @@ class YAMLConfig(object):
             if self.has_default(attr):
                 return self.get_default(attr)
             else:
-                raise ImproperlyConfigured('No %s key' % attr)
+                raise NotResolved('No %s key' % attr)
         else:
             return self.resolve_source(attr, object_data[attr])
 
+    def has_replacement(self, object_data, attr):
+        default = self.get_default(attr)
+        if not isinstance(default, NoDefault):
+            return False
+        if default.replacement is None:
+            return False
+        if default.replacement in object_data:
+            return True
+        else:
+            return self.has_default(default.replacement)
+
     def has_default(self, attr):
-        return self.get_default(attr) is not NoDefault
+        default = self.get_default(attr)
+        return not (default is NoDefault or isinstance(default, NoDefault))
 
     def get_default(self, attr):
         return self.RESOLVERS[attr][self.DEFAULT_INDEX]

@@ -8,7 +8,7 @@ else:
 from collapsar.const import CONST
 from collapsar.config import YAMLConfig, StringLoader, ImproperlyConfigured
 
-from collapsar.tests.objects import TestObject
+from collapsar.tests.objects import TestObject, SimpleFactory
 
 
 class BaseYAMLConfigTest(TestCase):
@@ -71,11 +71,22 @@ class DefaultsTest(BaseYAMLConfigTest):
         class: collapsar.tests.objects:TestObject
     """
 
-    def defatuls_test(self):
+    def runTest(self):
         description = self.get_description('defaults')
 
         self.assertEqual({}, description.properties)
         self.assertEqual(CONST.SCOPE.SINGLETON, description.scope)
+
+
+class FactoryTest(BaseYAMLConfigTest):
+    YAML = """
+    objects:
+      obj:
+        factory: collapsar.tests.objects:SimpleFactory
+    """
+    def runTest(self):
+        descr = self.get_description('obj')
+        self.assertEqual(SimpleFactory, descr.factory)
 
 
 class ErrorWithoutClassTest(TestCase):
