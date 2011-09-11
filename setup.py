@@ -7,8 +7,8 @@ from setuptools import setup, find_packages
 
 
 def read_file(name):
-    dir = os.path.dirname(os.path.abspath(__file__))
-    file_name = os.path.join(dir, name)
+    dir_name = os.path.dirname(os.path.abspath(__file__))
+    file_name = os.path.join(dir_name, name)
     with open(file_name) as f_obj:
         return f_obj.read()
 
