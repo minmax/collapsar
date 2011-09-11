@@ -1,5 +1,6 @@
 from collapsar.exc import ObjectNotRegistered
 from collapsar.const import CONST
+from collapsar.config import Rel
 
 
 class ApplicationContext(object):
@@ -32,5 +33,11 @@ class ApplicationContext(object):
         obj = descr.cls()
         if descr.properties:
             for name, value in descr.properties.iteritems():
+                if isinstance(value, Rel):
+                    rel = self.get_object(value.name)
+                    if value.attr is None:
+                        value = rel
+                    else:
+                        value = getattr(rel, value.attr)
                 setattr(obj, name, value)
         return obj

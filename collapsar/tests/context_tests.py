@@ -30,7 +30,6 @@ class PropertiesTest(BaseContextTest):
     CONFIG = {
         OBJECT_NAME: Description(
             cls = TestObject,
-            scope = CONST.SCOPE.SINGLETON,
             properties = {
                 'attr': ATTR_VALUE,
             }
@@ -43,6 +42,36 @@ class PropertiesTest(BaseContextTest):
 
     def get_instance(self):
         return self.get_object(self.OBJECT_NAME)
+
+
+class RelTest(BaseContextTest):
+    ROOT_NAME = 'root'
+    CONFIG = {
+        ROOT_NAME: Description(
+            cls = TestObject,
+            properties = {
+                'simple_rel': Rel('child'),
+                'attrib_rel': Rel('child', 'attr'),
+            }
+        ),
+        'child': Description(
+            cls = RelTestObject,
+            properties = {'attr': 'test'},
+        )
+    }
+
+    def simple_rel_test(self):
+        root = self.get_root()
+
+        self.assertTrue(isinstance(root.simple_rel, RelTestObject))
+
+    def rel_attribute_test(self):
+        root = self.get_root()
+
+        self.assertEqual('test', root.attrib_rel)
+
+    def get_root(self):
+        return self.get_object(self.ROOT_NAME)
 
 
 class ScopeTest(BaseContextTest):
