@@ -6,7 +6,9 @@ else:
     from unittest import TestCase
 
 from collapsar.const import CONST
-from collapsar.config import YAMLConfig, StringLoader, ImproperlyConfigured
+from collapsar.exc import ImproperlyConfigured
+from collapsar.config.yaml_config import YAMLConfig
+from collapsar.config.loaders import StringLoader
 
 from collapsar.tests.objects import TestObject, SimpleFactory
 

@@ -6,7 +6,7 @@ else:
     from unittest import TestCase
 
 from collapsar.context import ApplicationContext
-from collapsar.config import Description, Rel
+from collapsar.config.scheme import Description, Rel
 from collapsar.const import CONST
 
 from collapsar.tests.objects import TestObject, RelTestObject, SimpleFactory

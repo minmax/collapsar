@@ -1,6 +1,6 @@
 from collapsar.exc import ObjectNotRegistered
 from collapsar.const import CONST
-from collapsar.config import Rel
+from collapsar.config.scheme import Rel
 
 
 class ApplicationContext(object):
