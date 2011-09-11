@@ -11,40 +11,46 @@ from collapsar.config import YAMLConfig, StringLoader, ImproperlyConfigured
 from collapsar.tests.objects import TestObject
 
 
-EMPTY_YAML = """
-objects:
-"""
+class BaseYAMLConfigTest(TestCase):
+    YAML = ""
 
-WITHOUT_CLASS_YAML = """
-objects:
-  name:
-    instantiate: true
-"""
+    def setUp(self):
+        self.config = self.get_config()
 
-CLASS_YAML = """
-objects:
-  name:
-    class: collapsar.tests.objects:TestObject
-    scope: prototype
-    properties:
-      attr: test test
-      simple_rel:
-        rel: rel_test
-      extra_rel:
-        rel:
-          name: rel_name
-          attr: attr_name
-  defaults:
-    class: collapsar.tests.objects:TestObject
-"""
+    def get_config(self):
+        return YAMLConfig(StringLoader(self.YAML))
+
+    def get_description(self, name):
+        return self.config.get_descriptions()[name]
 
 
-class YAMLConfigTest(TestCase):
-    def empty_config_test(self):
-        self.assertEqual({}, self.get_descriptions(EMPTY_YAML))
+class EmptyConfigTest(BaseYAMLConfigTest):
+    YAML = """
+    objects:
+    """
 
-    def basic_config_test(self):
-        description = self.get_descriptions(CLASS_YAML)['name']
+    def runTest(self):
+        self.assertEqual({}, self.config.get_descriptions())
+
+
+class BaseDescriptionTest(BaseYAMLConfigTest):
+    YAML = """
+    objects:
+      name:
+        class: collapsar.tests.objects:TestObject
+        scope: prototype
+        properties:
+          attr: test test
+          simple_rel:
+            rel: rel_test
+          extra_rel:
+            rel:
+              name: rel_name
+              attr: attr_name
+    """
+
+    def runTest(self):
+        description = self.get_description('name')
 
         self.assertEqual(TestObject, description.cls)
 
@@ -57,16 +63,29 @@ class YAMLConfigTest(TestCase):
         self.assertEqual('rel_name', description.properties['extra_rel'].name)
         self.assertEqual('attr_name', description.properties['extra_rel'].attr)
 
+
+class DefaultsTest(BaseYAMLConfigTest):
+    YAML = """
+    objects:
+      defaults:
+        class: collapsar.tests.objects:TestObject
+    """
+
     def defatuls_test(self):
-        description = self.get_descriptions(CLASS_YAML)['defaults']
+        description = self.get_description('defaults')
 
         self.assertEqual({}, description.properties)
         self.assertEqual(CONST.SCOPE.SINGLETON, description.scope)
 
-    def condif_without_class_test(self):
-        with self.assertRaises(ImproperlyConfigured):
-            self.get_descriptions(WITHOUT_CLASS_YAML)
 
-    def get_descriptions(self, source):
-        config = YAMLConfig(StringLoader(source))
-        return config.get_descriptions()
+class ErrorWithoutClassTest(TestCase):
+    YAML = """
+    objects:
+      name:
+        instantiate: true
+    """
+
+    def runTest(self):
+        with self.assertRaises(ImproperlyConfigured):
+            config = YAMLConfig(StringLoader(self.YAML))
+            config.get_descriptions()
