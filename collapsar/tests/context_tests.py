@@ -110,11 +110,23 @@ class ScopeTest(BaseContextTest):
 
 class FactoryTest(BaseContextTest):
     CONFIG = {
-        'simple': Description(factory=SimpleFactory),
+        'plain': Description(factory=SimpleFactory),
+        'simple_rel': Description(factory=Rel('factory')),
+        'rel_with_attr': Description(factory=Rel('factory', 'get_instance')),
+
+        'factory': Description(cls=SimpleFactory),
     }
 
-    def direct_factory_class_test(self):
-        obj = self.get_object('simple')
-        print obj
+    def plain_factory_class_test(self):
+        self.check_object('plain', '__call__')
 
+    def simple_rel_test(self):
+        self.check_object('simple_rel', '__call__')
+
+    def rel_with_attr_test(self):
+        self.check_object('rel_with_attr', 'get_instance')
+
+    def check_object(self, name, flag):
+        obj = self.get_object(name)
         self.assertTrue(isinstance(obj, TestObject))
+        self.assertEqual(flag, obj.flag)
