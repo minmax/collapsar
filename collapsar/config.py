@@ -4,17 +4,6 @@ from collapsar.const import CONST
 from collapsar.exc import ImproperlyConfigured, NotResolved
 
 
-class ObjectFactory(object):
-    def __init__(self, instantiate=True):
-        self.instantiate = instantiate
-
-    def get_instance(self, cls):
-        if self.instantiate:
-            return cls()
-        else:
-            return cls
-
-
 class Rel(object):
     def __init__(self, name, attr=None):
         self.name = name
@@ -70,11 +59,6 @@ class BaseResolver(object):
 class ClassResolver(BaseResolver):
     def resolve(self, source):
         return self.resolve_import(source)
-
-
-class ProxyResolver(BaseResolver):
-    def resolve(self, source):
-        return source
 
 
 class PropertiesResolver(BaseResolver):
