@@ -2,7 +2,7 @@ from importlib import import_module
 
 from collapsar.const import CONST
 from collapsar.exc import ImproperlyConfigured
-from collapsar.config.scheme import Rel
+from collapsar.config.scheme import Rel, InitArgs
 
 
 __all__ = [
@@ -11,6 +11,7 @@ __all__ = [
     'ScopeResolver',
     'FactoryResolver',
     'BooleanResolver',
+    'InitArgsResolver',
 ]
 
 
@@ -102,3 +103,23 @@ class BooleanResolver(BaseResolver):
         if not isinstance(source, bool):
             raise ImproperlyConfigured('Must be boolean, not %r' % source)
         return source
+
+
+class InitArgsResolver(PropertiesResolver):
+    ARGS_KEY = 'args*'
+
+    def resolve(self, source):
+        if isinstance(source, (list, tuple)):
+            return InitArgs(args=self.resolve_list(source))
+        elif isinstance(source, dict):
+            init_args = InitArgs()
+            if self.ARGS_KEY in source:
+                init_args.args = self.resolve_list(source.pop(self.ARGS_KEY))
+            for name, value in source.iteritems():
+                init_args.kwargs[name] = self.resolve_property(value)
+            return init_args
+        else:
+            return InitArgs(args=[source])
+
+    def resolve_list(self, source):
+        return map(self.resolve_property, source)

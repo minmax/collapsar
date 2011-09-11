@@ -9,6 +9,7 @@ from collapsar.const import CONST
 from collapsar.exc import ImproperlyConfigured
 from collapsar.config.yaml_config import YAMLConfig
 from collapsar.config.loaders import StringLoader
+from collapsar.config.scheme import Rel
 
 from collapsar.tests.objects import TestObject, SimpleFactory
 
@@ -104,6 +105,44 @@ class FactoryTest(BaseYAMLConfigTest):
         descr = self.get_description('with_rel')
         self.assertEqual('simple_factory', descr.factory.name)
         self.assertEqual('get_instance', descr.factory.attr)
+
+
+class InitArgsTest(BaseYAMLConfigTest):
+    YAML = """
+    objects:
+      named:
+        class: collapsar.tests.objects:TestObject
+        init:
+          first: "test"
+          second: "test test"
+      args:
+        class: collapsar.tests.objects:TestObject
+        init:
+          args*:
+           - 1
+           - 2
+      with_rel:
+        class: collapsar.tests.objects:TestObject
+        init:
+          arg:
+            rel: rel_name
+    """
+
+    def named_test(self):
+        descr = self.get_description('named')
+
+        self.assertEqual('test', descr.init.kwargs['first'])
+        self.assertEqual('test test', descr.init.kwargs['second'])
+
+    def args_test(self):
+        descr = self.get_description('args')
+        self.assertEqual([1, 2], descr.init.args)
+
+    def with_rel_test(self):
+        descr = self.get_description('with_rel')
+        rel = descr.init.kwargs['arg']
+        self.assertTrue(isinstance(rel, Rel))
+        self.assertEqual('rel_name', rel.name)
 
 
 class ErrorWithoutClassTest(TestCase):

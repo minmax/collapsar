@@ -19,6 +19,7 @@ class YAMLConfig(object):
         'properties': (PropertiesResolver, Description.properties),
         'scope': (ScopeResolver, Description.scope),
         'lazy': (BooleanResolver, Description.lazy),
+        'init': (InitArgsResolver, Description.init),
     }
 
     NAMES_MAP = {
