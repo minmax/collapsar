@@ -9,7 +9,7 @@ from collapsar.context import ApplicationContext
 from collapsar.config import Description, Rel
 from collapsar.const import CONST
 
-from collapsar.tests.objects import TestObject, RelTestObject
+from collapsar.tests.objects import TestObject, RelTestObject, SimpleFactory
 
 
 class BaseContextTest(TestCase):
@@ -106,3 +106,15 @@ class ScopeTest(BaseContextTest):
             self.get_object(name),
             self.get_object(name)
         )
+
+
+class FactoryTest(BaseContextTest):
+    CONFIG = {
+        'simple': Description(factory=SimpleFactory),
+    }
+
+    def direct_factory_class_test(self):
+        obj = self.get_object('simple')
+        print obj
+
+        self.assertTrue(isinstance(obj, TestObject))

@@ -30,7 +30,12 @@ class ApplicationContext(object):
         return obj
 
     def _create_instance(self, descr):
-        obj = descr.cls()
+        if descr.factory is None:
+            obj = descr.cls()
+        else:
+            factory = descr.factory()
+            obj = factory()
+
         if descr.properties:
             for name, value in descr.properties.iteritems():
                 if isinstance(value, Rel):
