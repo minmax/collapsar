@@ -1,6 +1,9 @@
 class TestObject(object):
-    def __init__(self, flag=None):
-        self.flag = flag
+    flag = None
+
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
 
 
 class RelTestObject(object):
@@ -9,7 +12,12 @@ class RelTestObject(object):
 
 class SimpleFactory(object):
     def __call__(self):
-        return TestObject('__call__')
+        return self._get_object('__call__')
 
     def get_instance(self):
-        return TestObject('get_instance')
+        return self._get_object('get_instance')
+
+    def _get_object(self, flag):
+        obj = TestObject()
+        obj.flag = flag
+        return obj

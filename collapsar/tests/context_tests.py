@@ -8,7 +8,7 @@ else:
 from mock import Mock
 
 from collapsar.context import ApplicationContext
-from collapsar.config.scheme import Description, Rel
+from collapsar.config.scheme import Description, Rel, InitArgs
 from collapsar.const import CONST
 
 from collapsar.tests.objects import TestObject, RelTestObject, SimpleFactory
@@ -132,6 +132,38 @@ class FactoryTest(BaseContextTest):
         obj = self.get_object(name)
         self.assertTrue(isinstance(obj, TestObject))
         self.assertEqual(flag, obj.flag)
+
+
+class InitArgsTest(BaseContextTest):
+    ARGS = [1]
+    KWARGS = {'attr': 123}
+
+    CONFIG = {
+        'plain': Description(cls=TestObject, init=InitArgs(args=ARGS)),
+        'kwargs': Description(cls=TestObject, init=InitArgs(kwargs=KWARGS)),
+        'with_rel': Description(
+            cls = TestObject,
+            init = InitArgs(args=[Rel(name='rel')])
+        ),
+        'rel': Description(cls=RelTestObject),
+    }
+
+    def plain_test(self):
+        obj = self.get_object('plain')
+
+        self.assertSequenceEqual(self.ARGS, obj.args)
+
+    def kwargs_test(self):
+        obj = self.get_object('kwargs')
+
+        self.assertEqual(self.KWARGS, obj.kwargs)
+
+    def with_rel_test(self):
+        obj = self.get_object('with_rel')
+
+        rel = obj.args[0]
+        print rel
+        self.assertTrue(isinstance(rel, RelTestObject))
 
 
 class LazyTest(TestCase):

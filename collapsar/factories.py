@@ -14,7 +14,10 @@ class ObjectFactory(object):
 
     def _create_instance(self, context):
         if self.descr.factory is None:
-            obj = self.descr.cls()
+            obj = self.descr.cls(
+                *self._resolve_rel_in_args(context, self.descr.init.args),
+                **self._resolve_rel_in_kwargs(context, self.descr.init.kwargs)
+            )
         else:
             if isinstance(self.descr.factory, Rel):
                 factory = self._resolve_rel(context, self.descr.factory)
@@ -28,6 +31,22 @@ class ObjectFactory(object):
                     value = self._resolve_rel(context, value)
                 setattr(obj, name, value)
         return obj
+
+    def _resolve_rel_in_args(self, context, args):
+        result_list = []
+        for arg in args:
+            if isinstance(arg, Rel):
+                arg = self._resolve_rel(context, arg)
+            result_list.append(arg)
+        return result_list
+
+    def _resolve_rel_in_kwargs(self, context, kwargs):
+        result_dict = {}
+        for name, arg in kwargs.iteritems():
+            if isinstance(arg, Rel):
+                arg = self._resolve_rel(context, arg)
+            result_dict[name] = arg
+        return result_dict
 
     def _resolve_rel(self, context, rel):
         obj = context.get_object(rel.name)
