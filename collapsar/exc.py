@@ -6,6 +6,10 @@ class ImproperlyConfigured(CollapsarError):
     pass
 
 
+class MustBeOnlyOneOption(ImproperlyConfigured):
+    pass
+
+
 class NotResolved(ImproperlyConfigured):
     pass
 

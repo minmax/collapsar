@@ -6,7 +6,7 @@ else:
     from unittest import TestCase
 
 from collapsar.const import CONST
-from collapsar.exc import ImproperlyConfigured
+from collapsar.exc import ImproperlyConfigured, MustBeOnlyOneOption
 from collapsar.config.yaml_config import YAMLConfig
 from collapsar.config.loaders import StringLoader
 from collapsar.config.scheme import Rel
@@ -161,14 +161,27 @@ class InitArgsTest(BaseYAMLConfigTest):
         self.assertEqual('rel_name', rel.name)
 
 
-class ErrorWithoutClassTest(TestCase):
-    YAML = """
-    objects:
-      name:
-        instantiate: true
-    """
+class ConfigErrorTest(TestCase):
+    def class_with_factory_test(self):
+        yaml = """
+        objects:
+          name:
+            class: collapsar.tests.objects:TestObject
+            factory: collapsar.tests.objects:SimpleFactory
+        """
 
-    def runTest(self):
-        with self.assertRaises(ImproperlyConfigured):
-            config = YAMLConfig(StringLoader(self.YAML))
+        self.check(yaml, MustBeOnlyOneOption)
+
+    def error_without_class_test(self):
+        yaml = """
+        objects:
+          name:
+            instantiate: true
+        """
+
+        self.check(yaml, ImproperlyConfigured)
+
+    def check(self, yaml, exception):
+        with self.assertRaises(exception):
+            config = YAMLConfig(StringLoader(yaml))
             config.get_descriptions()

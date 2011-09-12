@@ -1,25 +1,37 @@
 import yaml
 
-from collapsar.exc import NotResolved
+from collapsar.exc import NotResolved, MustBeOnlyOneOption
 from collapsar.config.scheme import Description
 from collapsar.config.resolvers import *
 
 
 class NoDefault(object):
+    pass
+
+
+class Options(object):
     replacement = None
 
-    def __init__(self, replacement=None):
+    def __init__(self, default=NoDefault, replacement=None, only_me=False):
+        self.default = default
         self.replacement = replacement
+        self.only_me = only_me
+
+    def has_default(self):
+        return self.default is not NoDefault
 
 
 class YAMLConfig(object):
     RESOLVERS = {
-        'class': (ClassResolver, NoDefault('factory')),
-        'factory': (FactoryResolver, NoDefault('class')),
-        'properties': (PropertiesResolver, Description.properties),
-        'scope': (ScopeResolver, Description.scope),
-        'lazy': (BooleanResolver, Description.lazy),
-        'init': (InitArgsResolver, Description.init),
+        'class': (ClassResolver, Options(replacement='factory')),
+        'factory': (
+            FactoryResolver,
+            Options(replacement='class', only_me=True)
+        ),
+        'properties': (PropertiesResolver, Options(Description.properties)),
+        'scope': (ScopeResolver, Options(Description.scope)),
+        'lazy': (BooleanResolver, Options(Description.lazy)),
+        'init': (InitArgsResolver, Options(Description.init)),
     }
 
     NAMES_MAP = {
@@ -27,7 +39,7 @@ class YAMLConfig(object):
     }
 
     RESOLVER_INDEX = 0
-    DEFAULT_INDEX = 1
+    OPTIONS_INDEX = 1
 
     OBJECTS_KEY = 'objects'
 
@@ -69,31 +81,36 @@ class YAMLConfig(object):
         return descr
 
     def resolve_attr(self, object_data, attr):
-        if attr not in object_data:
-            if self.has_default(attr):
-                return self.get_default(attr)
+        options = self.get_options(attr)
+        if attr in object_data:
+            if options.only_me:
+                self.check_only_me_option(object_data, attr)
+
+            return self.resolve_source(attr, object_data[attr])
+        else:
+            if options.has_default():
+                return options.default
             else:
                 raise NotResolved('No %s key' % attr)
-        else:
-            return self.resolve_source(attr, object_data[attr])
+
+    def check_only_me_option(self, object_data, attr):
+        if self.get_not_processed(object_data, attr):
+            raise MustBeOnlyOneOption(attr)
 
     def has_replacement(self, object_data, attr):
-        default = self.get_default(attr)
-        if not isinstance(default, NoDefault):
+        options = self.get_options(attr)
+        if options.replacement is None:
             return False
-        if default.replacement is None:
-            return False
-        if default.replacement in object_data:
+        if options.replacement in object_data:
             return True
         else:
-            return self.has_default(default.replacement)
+            return self.has_default(options.replacement)
 
     def has_default(self, attr):
-        default = self.get_default(attr)
-        return not (default is NoDefault or isinstance(default, NoDefault))
+        return self.get_options(attr).has_default()
 
-    def get_default(self, attr):
-        return self.RESOLVERS[attr][self.DEFAULT_INDEX]
+    def get_options(self, attr):
+        return self.RESOLVERS[attr][self.OPTIONS_INDEX]
 
     def resolve_source(self, attr, source):
         resolver_cls = self.RESOLVERS[attr][self.RESOLVER_INDEX]
@@ -103,5 +120,7 @@ class YAMLConfig(object):
         name = self.NAMES_MAP.get(attr, attr)
         setattr(descr, name, value)
 
-    def get_not_processed(self, object_data):
-        return set(object_data) - set(self.RESOLVERS)
+    def get_not_processed(self, object_data, *keys):
+        if not keys:
+            keys = self.RESOLVERS
+        return set(object_data) - set(keys)
