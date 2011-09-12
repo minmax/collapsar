@@ -43,14 +43,6 @@ class BaseDescriptionTest(BaseYAMLConfigTest):
         class: collapsar.tests.objects:TestObject
         scope: prototype
         lazy: true
-        properties:
-          attr: test test
-          simple_rel:
-            rel: rel_test
-          extra_rel:
-            rel:
-              name: rel_name
-              attr: attr_name
     """
 
     def runTest(self):
@@ -62,7 +54,31 @@ class BaseDescriptionTest(BaseYAMLConfigTest):
 
         self.assertEqual(True, description.lazy)
 
-        self.assertEqual('test test', description.properties['attr'])
+
+class PropertiesTest(BaseYAMLConfigTest):
+    YAML = """
+    objects:
+      name:
+        class: collapsar.tests.objects:TestObject
+        properties:
+          plain: test test
+          typed:
+            type: bool
+            value: "123"
+          simple_rel:
+            rel: rel_test
+          extra_rel:
+            rel:
+              name: rel_name
+              attr: attr_name
+    """
+
+    def runTest(self):
+        description = self.get_description('name')
+
+        self.assertEqual('test test', description.properties['plain'])
+
+        self.assertEqual(True, description.properties['typed'])
 
         self.assertEqual('rel_test', description.properties['simple_rel'].name)
 
